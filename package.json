@@ -1,0 +1,13 @@
+{
+  "name": "coderhub-root",
+  "version": "1.0.0",
+  "description": "Root package for CoderHub",
+  "scripts": {
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "start": "cd server && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
