@@ -8,6 +8,9 @@ import UserProfilePage from './pages/UserProfilePage'
 import SettingsPage from './pages/SettingsPage'
 import Navbar from './components/Navbar'
 
+import ActivityListPage from './pages/ActivityListPage'
+import MembershipPage from './pages/MembershipPage'
+
 function App() {
   const { user } = useAuth()
 
@@ -27,6 +30,22 @@ function App() {
           <Route
             path="/settings"
             element={user ? <SettingsPage /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/settings/liked"
+            element={user ? <ActivityListPage type="liked" /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/settings/commented"
+            element={user ? <ActivityListPage type="commented" /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/settings/saved"
+            element={user ? <ActivityListPage type="saved" /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/membership"
+            element={user ? <MembershipPage /> : <Navigate to="/" replace />}
           />
           <Route
             path="/feed"

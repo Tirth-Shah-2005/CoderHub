@@ -227,6 +227,7 @@ router.put(
   '/profile/edit',
   authMiddleware,
   [
+    body('name').optional().isLength({ max: 50 }).withMessage('Name max 50 chars'),
     body('bio').optional().isLength({ max: 200 }).withMessage('Bio max 200 chars'),
     body('avatarColor').optional().isString(),
     body('profileImage').optional().isString(),
@@ -237,8 +238,9 @@ router.put(
       return res.status(400).json({ errors: errors.array() });
     }
     try {
-      const { bio, avatarColor, profileImage } = req.body;
+      const { name, bio, avatarColor, profileImage } = req.body;
       const update = {};
+      if (name !== undefined) update.name = name;
       if (bio !== undefined) update.bio = bio;
       if (avatarColor !== undefined) update.avatarColor = avatarColor;
       if (profileImage !== undefined) update.profileImage = profileImage;

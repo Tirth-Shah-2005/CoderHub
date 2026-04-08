@@ -13,9 +13,10 @@ const AVATAR_COLORS = [
   'linear-gradient(135deg, #58a6ff, #3fb950)',
 ]
 
-export default function EditProfileModal({ currentBio, currentAvatarColor, currentProfileImage, onSave, onClose }) {
+export default function EditProfileModal({ currentName, currentBio, currentAvatarColor, currentProfileImage, onSave, onClose }) {
   const { user, login } = useAuth()
   const token = localStorage.getItem('coderhub_token')
+  const [name, setName] = useState(currentName || '')
   const [bio, setBio] = useState(currentBio || '')
   const [avatarColor, setAvatarColor] = useState(currentAvatarColor || AVATAR_COLORS[0])
   const [profileImage, setProfileImage] = useState(currentProfileImage || '')
@@ -46,8 +47,14 @@ export default function EditProfileModal({ currentBio, currentAvatarColor, curre
     setLoading(true)
     setError('')
     try {
-      const res = await api.put('/users/profile/edit', { bio, avatarColor, profileImage })
-      login({ ...user, bio: res.data.bio, avatarColor: res.data.avatarColor, profileImage: res.data.profileImage }, token)
+      const res = await api.put('/users/profile/edit', { name, bio, avatarColor, profileImage })
+      login({ 
+        ...user, 
+        name: res.data.name,
+        bio: res.data.bio, 
+        avatarColor: res.data.avatarColor, 
+        profileImage: res.data.profileImage 
+      }, token)
       onSave(res.data)
       onClose()
     } catch (err) {
@@ -134,6 +141,19 @@ export default function EditProfileModal({ currentBio, currentAvatarColor, curre
         </div>
 
         {error && <div className="error-msg"><span>⚠</span> {error}</div>}
+
+        {/* Name */}
+        <div className="form-group">
+          <label className="form-label">👤 Display Name</label>
+          <input
+            type="text"
+            className="caption-input"
+            placeholder="What should we call you?"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={50}
+          />
+        </div>
 
         {/* Bio */}
         <div className="form-group">

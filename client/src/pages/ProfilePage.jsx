@@ -83,8 +83,9 @@ export default function ProfilePage() {
         </div>
 
         <div className="profile-info">
-          <h2>@{user?.user_id}</h2>
-          <div className="profile-uid">✉️ {user?.email}</div>
+          {user?.name && <h1 className="profile-display-name">{user.name}</h1>}
+          <h2 className="profile-userId">@{user?.user_id}</h2>
+          <div className="profile-email">✉️ {user?.email}</div>
           {profileData.bio ? (
             <div className="profile-bio">{profileData.bio}</div>
           ) : (

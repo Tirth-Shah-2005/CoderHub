@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -49,10 +49,17 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [likes, setLikes] = useState(post.likes || [])
-  const [comments, setComments] = useState(post.comments || [])
+  const [likes, setLikes] = useState(initialPost.likes || [])
+  const [comments, setComments] = useState(initialPost.comments || [])
 
-  const isLiked = user && likes.some((id) => id === user.id || id?._id === user.id || id === user.id)
+  // Sync state if props change (important for deletions and updates in feed)
+  useEffect(() => {
+    setPost(initialPost)
+    setLikes(initialPost.likes || [])
+    setComments(initialPost.comments || [])
+  }, [initialPost])
+
+  const isLiked = user && likes.some((id) => id === user.id || id?._id === user.id)
   const isAuthor = user && post.author?.user_id === user.user_id
   const postType = post.postType || 'CODE'
 
@@ -79,13 +86,23 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
     }
   }
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this post?')) return
+  const handleDelete = async (e) => {
+    // Prevent event bubbling if the card is inside a clickable container
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    
+    if (!window.confirm('Are you sure you want to permanently delete this post?')) return
+    
     try {
-      await api.delete(`/posts/${post._id}`)
+      console.log('Attempting to delete post:', post._id)
+      const res = await api.delete(`/posts/${post._id}`)
+      console.log('Delete successful:', res.data)
       onDelete && onDelete(post._id)
     } catch (err) {
-      console.error('Delete error', err)
+      console.error('Delete error details:', err.response?.data || err.message)
+      alert('Could not delete post: ' + (err.response?.data?.message || err.message))
     }
   }
 

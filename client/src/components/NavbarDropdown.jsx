@@ -43,23 +43,32 @@ export default function NavbarDropdown() {
 
       {isOpen && (
         <div className="nav-dropdown-menu">
-          <NavLink 
-            to="/profile" 
-            className="dropdown-item profile-entry" 
-            onClick={() => setIsOpen(false)}
-          >
-            <div className="dropdown-profile-info">
-              <span className="dropdown-username">@{user.user_id}</span>
-              <span className="dropdown-view-profile">View Profile</span>
+          <div className="dropdown-item profile-entry">
+            <div className="nav-dropdown-header">
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontWeight: 800, fontSize: '1rem' }}>@{user.user_id}</span>
+                {user.name && (
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    {user.name}
+                  </span>
+                )}
+              </div>
+              <NavLink to="/profile" className="view-profile-link" onClick={() => setIsOpen(false)}>
+                View Profile
+              </NavLink>
             </div>
-          </NavLink>
+          </div>
 
           {isProfilePage && (
             <>
               <div className="dropdown-divider" />
-              <button className="dropdown-item" onClick={() => setIsOpen(false)}>
-                <span>💎 Membership</span>
-              </button>
+              <NavLink 
+                to="/membership" 
+                className="dropdown-item premium-gold" 
+                onClick={() => setIsOpen(false)}
+              >
+                💎 <span>Membership</span>
+              </NavLink>
               <NavLink 
                 to="/settings" 
                 className="dropdown-item" 

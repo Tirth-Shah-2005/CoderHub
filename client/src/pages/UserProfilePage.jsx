@@ -113,7 +113,8 @@ export default function UserProfilePage() {
         </div>
 
         <div className="profile-info">
-          <h2>@{profile?.user_id}</h2>
+          {profile?.name && <h1 className="profile-display-name">{profile.name}</h1>}
+          <h2 className="profile-userId">@{profile?.user_id}</h2>
           {profile?.bio && (
             <div className="profile-bio">{profile.bio}</div>
           )}
