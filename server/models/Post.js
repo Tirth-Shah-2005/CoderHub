@@ -28,39 +28,44 @@ const PostSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    postType: {
+      type: String,
+      enum: ['CODE', 'TIP', 'QUIZ'],
+      default: 'CODE',
+    },
+    // --- CODE & QUIZ fields ---
     language: {
       type: String,
-      required: [true, 'Programming language is required'],
       enum: [
-        'JavaScript',
-        'TypeScript',
-        'Python',
-        'Java',
-        'C',
-        'C++',
-        'C#',
-        'Go',
-        'Rust',
-        'PHP',
-        'Ruby',
-        'Swift',
-        'Kotlin',
-        'HTML',
-        'CSS',
-        'SQL',
-        'Shell',
-        'Other',
+        'JavaScript', 'TypeScript', 'Python', 'Java', 'C', 'C++', 'C#',
+        'Go', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin', 'HTML', 'CSS',
+        'SQL', 'Shell', 'Other',
       ],
+      default: null,
     },
     code: {
       type: String,
-      required: [true, 'Code is required'],
       trim: true,
+      default: '',
     },
     caption: {
       type: String,
       default: '',
       maxlength: 300,
+    },
+    // --- QUIZ field ---
+    quizQuestion: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+      default: '',
+    },
+    // --- TIP field ---
+    tipText: {
+      type: String,
+      trim: true,
+      maxlength: 400,
+      default: '',
     },
     likes: [
       {

@@ -15,6 +15,9 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/activity', require('./routes/activity'));
+app.use('/api/folders', require('./routes/folders'));
 
 // Health check
 app.get('/', (req, res) => {

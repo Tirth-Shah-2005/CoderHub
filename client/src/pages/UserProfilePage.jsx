@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PostCard from '../components/PostCard'
+import SuggestionRow from '../components/SuggestionRow'
 import api from '../api/axios'
 
 export default function UserProfilePage() {
@@ -16,6 +17,8 @@ export default function UserProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false)
   const [followersCount, setFollowersCount] = useState(0)
   const [followLoading, setFollowLoading] = useState(false)
+  const [mutualFollowers, setMutualFollowers] = useState([])
+  const [suggestions, setSuggestions] = useState([])
 
   const isOwnProfile = currentUser?.user_id === userId
 
@@ -32,6 +35,11 @@ export default function UserProfilePage() {
       setPosts(res.data.posts)
       setIsFollowing(res.data.isFollowing)
       setFollowersCount(res.data.user.followersCount || 0)
+      setMutualFollowers(res.data.mutualFollowers || [])
+
+      // Fetch suggestions for profile discovery
+      const sugRes = await api.get('/users/suggestions')
+      setSuggestions(sugRes.data.filter(s => s.user_id !== userId))
     } catch (err) {
       if (err.response?.status === 404) setNotFound(true)
       else console.error(err)
@@ -112,6 +120,15 @@ export default function UserProfilePage() {
           <div className="profile-email">
             📅 Joined {new Date(profile?.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </div>
+          {mutualFollowers.length > 0 && (
+            <div className="mutual-followers">
+              👤 Followed by {mutualFollowers.map((m, i) => (
+                <span key={m._id || i} className="mutual-name">
+                  @{m.user_id}{i < mutualFollowers.length - 1 ? ', ' : ''}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '14px' }}>
@@ -151,6 +168,13 @@ export default function UserProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Suggestions Row for Profile */}
+      {!isOwnProfile && suggestions.length > 0 && (
+        <div style={{ marginBottom: '24px' }}>
+          <SuggestionRow suggestions={suggestions} />
+        </div>
+      )}
 
       <div className="section-divider">Posts by @{profile?.user_id}</div>
 

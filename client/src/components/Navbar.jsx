@@ -1,78 +1,59 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import SearchBar from './SearchBar'
+import NotificationBell from './NotificationBell'
+import NavbarDropdown from './NavbarDropdown'
 
 export default function Navbar() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { isDark, toggleTheme } = useTheme()
-  const navigate = useNavigate()
+  const location = useLocation()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+  const showSearch = location.pathname === '/feed'
 
   return (
     <nav className="navbar">
-      <NavLink to="/feed" className="navbar-logo" style={{ textDecoration: 'none' }}>
-        <div className="logo-icon">{'</>'}</div>
-        CoderHub
-      </NavLink>
-
-      {/* Search Bar - center */}
-      <SearchBar />
-
-      <div className="navbar-links">
-        <NavLink
-          to="/feed"
-          className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-        >
-          🌐 Feed
-        </NavLink>
-        <NavLink
-          to="/profile"
-          className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-        >
-          👤 Profile
+      <div className="nav-left">
+        <NavLink to="/home" className="navbar-logo" style={{ textDecoration: 'none' }}>
+          <div className="logo-icon">{'</>'}</div>
+          CoderHub
         </NavLink>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* Theme toggle */}
-        <button
-          className="theme-toggle"
-          onClick={toggleTheme}
-          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          aria-label="Toggle theme"
-        >
-          <span className="theme-toggle-track">
-            <span className="theme-toggle-thumb">
-              {isDark ? '🌙' : '☀️'}
-            </span>
-          </span>
+      <div className="nav-center">
+        <div className="nav-main-links">
+          <NavLink
+            className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            to="/home"
+          >
+            🏠 Home
+          </NavLink>
+          <NavLink
+            className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            to="/feed"
+          >
+            🌐 Feed
+          </NavLink>
+        </div>
+        {showSearch && <SearchBar />}
+      </div>
+
+      <div className="nav-right">
+        <button className="theme-toggle" onClick={toggleTheme}>
+          <div className="theme-toggle-track">
+            <div className="theme-toggle-thumb">{isDark ? '🌙' : '☀️'}</div>
+          </div>
         </button>
 
-        <div className="navbar-user">
-          <div
-            className="user-avatar"
-            style={{
-              background: user?.profileImage ? 'transparent' : (user?.avatarColor || 'linear-gradient(135deg, #58a6ff, #bc8cff)'),
-              overflow: 'hidden',
-            }}
-          >
-            {user?.profileImage
-              ? <img src={user.profileImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-              : user?.user_id?.[0]?.toUpperCase() || '?'
-            }
+        <NotificationBell />
+
+        {user && (
+          <div className="nav-profile-section">
+            <NavbarDropdown />
           </div>
-          <span className="user-name">@{user?.user_id}</span>
-        </div>
-        <button className="btn-logout" onClick={handleLogout}>
-          🚪 Logout
-        </button>
+        )}
       </div>
     </nav>
   )
 }
-

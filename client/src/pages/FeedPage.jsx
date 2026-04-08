@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react'
 import PostCard from '../components/PostCard'
-
-import PostModal from '../components/PostModal'
+import CreateMenu from '../components/CreateMenu'
 import api from '../api/axios'
 
 export default function FeedPage() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     fetchPosts()
@@ -62,19 +60,7 @@ export default function FeedPage() {
         ))
       )}
 
-      {/* Floating Action Button */}
-      <button className="fab" onClick={() => setShowModal(true)} title="New Post">
-        <span className="fab-icon">+</span>
-        <span className="fab-label">Post Code</span>
-      </button>
-
-      {/* Post Modal */}
-      {showModal && (
-        <PostModal
-          onPostCreated={handlePostCreated}
-          onClose={() => setShowModal(false)}
-        />
-      )}
+      <CreateMenu onPostCreated={handlePostCreated} />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PostCard from '../components/PostCard'
 import EditProfileModal from '../components/EditProfileModal'
@@ -64,7 +65,6 @@ export default function ProfilePage() {
     )
   }
 
-  const totalLikes = posts.reduce((sum, p) => sum + (p.likes?.length || 0), 0)
 
   return (
     <div>
@@ -92,6 +92,7 @@ export default function ProfilePage() {
               No bio yet — click Edit to add one
             </div>
           )}
+
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
@@ -111,10 +112,6 @@ export default function ProfilePage() {
             <div className="profile-stats">
               <div className="stat-num">{followStats.followingCount}</div>
               <div className="stat-label">Following</div>
-            </div>
-            <div className="profile-stats">
-              <div className="stat-num">{totalLikes}</div>
-              <div className="stat-label">Likes</div>
             </div>
           </div>
         </div>

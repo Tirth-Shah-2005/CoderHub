@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
 const authMiddleware = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
@@ -13,13 +14,102 @@ router.get('/search', async (req, res) => {
     const q = req.query.q?.trim();
     if (!q || q.length < 1) return res.json([]);
 
-    const users = await User.find({
+    let users = await User.find({
       user_id: { $regex: q, $options: 'i' },
     })
       .select('user_id bio avatarColor profileImage followers following createdAt')
-      .limit(8);
+      .limit(15);
+
+    // If logged in, calculate mutuals and sort
+    const authHeader = req.header('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const jwt = require('jsonwebtoken');
+      try {
+        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+        const currentUser = await User.findById(decoded.user.id);
+        if (currentUser) {
+          const myFollowing = (currentUser.following || []).map((id) => String(id));
+
+          // Map users with mutual connection logic
+          const enrichedUsers = await Promise.all(
+            users.map(async (u) => {
+              const uFollowers = u.followers || [];
+              const myFollowingIds = currentUser.following.map(id => id.toString());
+              
+              const mutualIds = uFollowers.filter((f) => 
+                myFollowingIds.includes(f.toString())
+              );
+              
+              let mutualSample = [];
+              if (mutualIds.length > 0) {
+                const sampleUsers = await User.find({ _id: { $in: mutualIds.slice(0, 2) } }).select(
+                  'user_id'
+                );
+                mutualSample = sampleUsers.map((su) => su.user_id);
+              }
+
+              return {
+                ...u.toObject(),
+                mutualCount: mutualIds.length,
+                mutualSample,
+              };
+            })
+          );
+
+          // Sort: mutual connections first
+          enrichedUsers.sort((a, b) => b.mutualCount - a.mutualCount);
+          users = enrichedUsers;
+        }
+      } catch (_) {}
+    }
 
     res.json(users);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/users/suggestions
+// @desc    Get account suggestions (connected or new)
+// @access  Private
+router.get('/suggestions', authMiddleware, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    const myFollowing = currentUser.following;
+
+    // 1. Friends of friends (mutual connections)
+    const followedUsers = await User.find({ _id: { $in: myFollowing } });
+    let fofIds = [];
+    followedUsers.forEach((u) => {
+      fofIds = [...fofIds, ...u.following.map((id) => id.toString())];
+    });
+
+    // 2. New accounts (< 7 days)
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    // Exclude self and already followed
+    const excludeIds = [...myFollowing.map((id) => id.toString()), req.user.id];
+
+    // Query for suggestions
+    let suggestions = await User.find({
+      _id: { $nin: excludeIds },
+      $or: [{ _id: { $in: fofIds } }, { createdAt: { $gte: weekAgo } }],
+    })
+      .select('user_id avatarColor bio profileImage createdAt')
+      .limit(15);
+
+    // If still not enough, get some random active accounts
+    if (suggestions.length < 5) {
+      const moreSuggestions = await User.find({
+        _id: { $nin: [...excludeIds, ...suggestions.map((s) => s._id.toString())] },
+      })
+        .select('user_id avatarColor bio profileImage createdAt')
+        .limit(5);
+      suggestions = [...suggestions, ...moreSuggestions];
+    }
+
+    res.json(suggestions.slice(0, 10)); // Return top 10
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: 'Server error' });
@@ -40,14 +130,24 @@ router.get('/:userId', async (req, res) => {
 
     // Check if the requesting user follows this profile
     let isFollowing = false;
+    let mutualFollowers = [];
     const authHeader = req.header('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const jwt = require('jsonwebtoken');
       try {
         const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
-        isFollowing = user.followers.some(
-          (id) => id.toString() === decoded.user.id
-        );
+        const currentUserId = decoded.user.id;
+        isFollowing = user.followers.some((id) => id.toString() === currentUserId);
+
+        // Mutual Followers: People I follow who also follow this user
+        const currentUser = await User.findById(currentUserId);
+        if (currentUser) {
+          mutualFollowers = await User.find({
+            _id: { $in: user.followers, $in: currentUser.following },
+          })
+            .select('user_id')
+            .limit(3);
+        }
       } catch (_) {}
     }
 
@@ -59,6 +159,7 @@ router.get('/:userId', async (req, res) => {
       },
       posts,
       isFollowing,
+      mutualFollowers,
     });
   } catch (err) {
     console.error(err.message);
@@ -98,6 +199,16 @@ router.put('/:userId/follow', authMiddleware, async (req, res) => {
     }
 
     await Promise.all([targetUser.save(), currentUser.save()]);
+
+    // Trigger Notification for FOLLOW
+    if (!alreadyFollowing) {
+      const notification = new Notification({
+        recipient: targetUser._id,
+        sender: req.user.id,
+        type: 'FOLLOW',
+      });
+      await notification.save();
+    }
 
     res.json({
       isFollowing: !alreadyFollowing,

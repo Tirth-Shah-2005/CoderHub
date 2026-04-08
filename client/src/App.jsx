@@ -2,8 +2,10 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import AuthPage from './pages/AuthPage'
 import FeedPage from './pages/FeedPage'
+import HomePage from './pages/HomePage'
 import ProfilePage from './pages/ProfilePage'
 import UserProfilePage from './pages/UserProfilePage'
+import SettingsPage from './pages/SettingsPage'
 import Navbar from './components/Navbar'
 
 function App() {
@@ -16,7 +18,15 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={user ? <Navigate to="/feed" replace /> : <AuthPage />}
+            element={user ? <Navigate to="/home" replace /> : <AuthPage />}
+          />
+          <Route
+            path="/home"
+            element={user ? <HomePage /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/settings"
+            element={user ? <SettingsPage /> : <Navigate to="/" replace />}
           />
           <Route
             path="/feed"

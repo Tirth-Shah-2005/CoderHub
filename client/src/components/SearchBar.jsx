@@ -84,6 +84,12 @@ export default function SearchBar() {
               </div>
               <div className="search-result-info">
                 <span className="search-result-uid">@{user.user_id}</span>
+                {user.mutualCount > 0 && (
+                  <span className="search-result-mutual">
+                    👤 Followed by @{user.mutualSample[0]}
+                    {user.mutualCount > 1 && ` and ${user.mutualCount - 1} other${user.mutualCount > 2 ? 's' : ''}`}
+                  </span>
+                )}
                 {user.bio && <span className="search-result-bio">{user.bio}</span>}
               </div>
             </button>
