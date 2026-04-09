@@ -8,50 +8,50 @@ export default function MembershipPage() {
   const tiers = [
     {
       name: 'Basic',
-      price: '$0',
+      price: '₹0',
       period: '/ month',
       description: 'The standard CoderHub experience, perfect for getting started.',
       features: [
-        'Unlimited global feed browsing',
         'Standard code sharing (3/day)',
-        'Basic profile customization',
+        'Standard tips sharing (1/day)',
+        'Standard quizzes (1/day)',
         'Public folders and snippets',
-        'Standard support'
+        'Normal profile and avatar'
       ],
       buttonText: 'Current Plan',
       isCurrent: user?.membershipLevel === 'FREE' || !user?.membershipLevel,
       color: 'var(--text-secondary)'
     },
     {
-      name: 'Advanced',
-      price: '$5',
+      name: 'Pro',
+      price: '₹449',
       period: '/ month',
-      description: 'Power up your development journey with enhanced capabilities.',
+      description: 'Power up your development journey with professional capabilities.',
       features: [
-        'Unlimited code posts',
-        'Advanced profile badge 🎖️',
-        'Ad-free experience',
-        'Custom avatar gradients',
-        '50 Private snippets',
-        'Faster global CDN'
+        'Enhanced code sharing (5/day)',
+        'Unlimited tips per day 💡',
+        'Increased quizzes (10/day)',
+        'Blue gradient profilering',
+        'Exclusive PRO badge box',
+        'Ad-free experience'
       ],
-      buttonText: 'Upgrade to Advanced',
+      buttonText: 'Upgrade to Pro',
       isCurrent: user?.membershipLevel === 'ADVANCED',
       highlight: true,
-      color: 'var(--accent)'
+      color: '#00d2ff'
     },
     {
       name: 'Premium',
-      price: '$10',
+      price: '₹899',
       period: '/ month',
-      description: 'The ultimate toolkit for serious developers and teams.',
+      description: 'The ultimate toolkit for serious developers and elite coders.',
       features: [
-        'Everything in Advanced',
-        'Unlimited Private snippets',
-        'Custom profile themes',
-        'Priority 24/7 support',
-        'Early access to new features',
-        'Custom domain for profile (soon)'
+        'Unlimited code posts 🚀',
+        'Unlimited tips per day',
+        'Unlimited quizzes',
+        'Gold gradient profile ring',
+        'Exclusive Gold Crown identity',
+        'Priority 24/7 support'
       ],
       buttonText: 'Upgrade to Premium',
       isCurrent: user?.membershipLevel === 'PREMIUM',

@@ -128,7 +128,7 @@ export default function QuizModal({ onPostCreated, onClose }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <h3>🧩 Post a Quiz</h3>
             <span className="usage-indicator">
-              {usage.limit - usage.count} / {usage.limit} left
+              {usage.limit === -1 ? 'Unlimited' : `${usage.limit - usage.count} / ${usage.limit} left`}
             </span>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>

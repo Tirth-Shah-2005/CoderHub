@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Avatar from './Avatar';
 
 export default function NavbarDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,14 +32,12 @@ export default function NavbarDropdown() {
         className="nav-profile-trigger" 
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          background: user.profileImage ? 'transparent' : (user.avatarColor || 'var(--accent)'),
-          border: '2px solid var(--border-color)'
+          background: 'transparent',
+          padding: 0,
+          border: 'none'
         }}
       >
-        {user.profileImage 
-          ? <img src={user.profileImage} alt="profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-          : user.user_id?.[0]?.toUpperCase()
-        }
+        <Avatar user={user} size={28} />
       </button>
 
       {isOpen && (

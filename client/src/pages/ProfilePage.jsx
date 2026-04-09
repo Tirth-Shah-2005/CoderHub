@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import PostCard from '../components/PostCard'
 import EditProfileModal from '../components/EditProfileModal'
 import api from '../api/axios'
+import Avatar from '../components/Avatar'
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -69,18 +70,7 @@ export default function ProfilePage() {
   return (
     <div>
       <div className="profile-header">
-        <div
-          className="profile-avatar"
-          style={{
-            background: profileData.profileImage ? 'transparent' : profileData.avatarColor,
-            overflow: 'hidden',
-          }}
-        >
-          {profileData.profileImage
-            ? <img src={profileData.profileImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-            : user?.user_id?.[0]?.toUpperCase()
-          }
-        </div>
+        <Avatar user={{ ...user, ...profileData }} size={72} />
 
         <div className="profile-info">
           {user?.name && <h1 className="profile-display-name">{user.name}</h1>}

@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate('author', 'user_id email avatarColor bio profileImage createdAt');
+      .populate('author', 'user_id email avatarColor bio profileImage membershipLevel createdAt');
     res.json(posts);
   } catch (err) {
     console.error(err.message);
@@ -29,7 +29,7 @@ router.get('/following', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id);
     const posts = await Post.find({ author: { $in: user.following } })
       .sort({ createdAt: -1 })
-      .populate('author', 'user_id avatarColor bio profileImage createdAt');
+      .populate('author', 'user_id email avatarColor bio profileImage membershipLevel createdAt');
     res.json(posts);
   } catch (err) {
     console.error(err.message);
@@ -43,7 +43,7 @@ router.get('/following', authMiddleware, async (req, res) => {
 router.get('/user/:userId', async (req, res) => {
   try {
     const posts = await Post.find()
-      .populate('author', 'user_id email avatarColor bio profileImage createdAt')
+      .populate('author', 'user_id email avatarColor bio profileImage membershipLevel createdAt')
       .sort({ createdAt: -1 });
 
     const userPosts = posts.filter(
@@ -62,47 +62,46 @@ router.get('/user/:userId', async (req, res) => {
 // @access  Private
 router.get('/rate-limit-status', authMiddleware, async (req, res) => {
   try {
+    const user = await User.findById(req.user.id);
+    const membership = user.membershipLevel || 'FREE';
+
+    const limits = {
+      FREE: { code: 3, tip: 1, quiz: 1 },
+      ADVANCED: { code: 5, tip: Infinity, quiz: 10 },
+      PREMIUM: { code: Infinity, tip: Infinity, quiz: Infinity }
+    };
+
+    const userLimits = limits[membership] || limits.FREE;
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const [lastTip, lastQuiz, codePosts] = await Promise.all([
-      Post.findOne({ author: req.user.id, postType: 'TIP', createdAt: { $gte: since } })
-        .sort({ createdAt: -1 }),
-      Post.findOne({ author: req.user.id, postType: 'QUIZ', createdAt: { $gte: since } })
-        .sort({ createdAt: -1 }),
-      Post.find({ author: req.user.id, postType: 'CODE', createdAt: { $gte: since } })
-        .sort({ createdAt: 1 }), // Oldest first
+
+    const [tips, quizzes, codePosts] = await Promise.all([
+      Post.find({ author: req.user.id, postType: 'TIP', createdAt: { $gte: since } }).sort({ createdAt: 1 }),
+      Post.find({ author: req.user.id, postType: 'QUIZ', createdAt: { $gte: since } }).sort({ createdAt: 1 }),
+      Post.find({ author: req.user.id, postType: 'CODE', createdAt: { $gte: since } }).sort({ createdAt: 1 }),
     ]);
 
     const now = Date.now();
-    const tipNextAllowed = lastTip
-      ? new Date(lastTip.createdAt).getTime() + 24 * 60 * 60 * 1000
-      : null;
-    const quizNextAllowed = lastQuiz
-      ? new Date(lastQuiz.createdAt).getTime() + 24 * 60 * 60 * 1000
-      : null;
-    
-    const codeCount = codePosts.length;
-    const codeNextAllowed = codeCount >= 3
-      ? new Date(codePosts[0].createdAt).getTime() + 24 * 60 * 60 * 1000
-      : null;
+
+    const getStatus = (posts, limit) => {
+      const count = posts.length;
+      const canPost = limit === Infinity || count < limit;
+      const nextAllowedAt = !canPost && posts.length > 0
+        ? new Date(posts[0].createdAt).getTime() + 24 * 60 * 60 * 1000
+        : null;
+
+      return {
+        canPost,
+        count,
+        limit: limit === Infinity ? -1 : limit,
+        nextAllowedAt,
+        msRemaining: nextAllowedAt ? Math.max(0, nextAllowedAt - now) : 0,
+      };
+    };
 
     res.json({
-      tip: {
-        canPost: !lastTip,
-        nextAllowedAt: tipNextAllowed,
-        msRemaining: tipNextAllowed ? Math.max(0, tipNextAllowed - now) : 0,
-      },
-      quiz: {
-        canPost: !lastQuiz,
-        nextAllowedAt: quizNextAllowed,
-        msRemaining: quizNextAllowed ? Math.max(0, quizNextAllowed - now) : 0,
-      },
-      code: {
-        canPost: codeCount < 3,
-        count: codeCount,
-        limit: 3,
-        nextAllowedAt: codeNextAllowed,
-        msRemaining: codeNextAllowed ? Math.max(0, codeNextAllowed - now) : 0,
-      }
+      tip: getStatus(tips, userLimits.tip),
+      quiz: getStatus(quizzes, userLimits.quiz),
+      code: getStatus(codePosts, userLimits.code)
     });
   } catch (err) {
     console.error(err.message);
@@ -137,34 +136,31 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 
   // --- Rate limiting ---
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  // --- Rate limiting ---
+  const user = await User.findById(req.user.id);
+  const membership = user.membershipLevel || 'FREE';
 
-  if (postType === 'TIP' || postType === 'QUIZ') {
-    const existing = await Post.findOne({
+  const limits = {
+    FREE: { CODE: 3, TIP: 1, QUIZ: 1 },
+    ADVANCED: { CODE: 5, TIP: Infinity, QUIZ: 10 },
+    PREMIUM: { CODE: Infinity, TIP: Infinity, QUIZ: Infinity }
+  };
+
+  const userLimits = limits[membership] || limits.FREE;
+  const limit = userLimits[postType];
+
+  if (limit !== Infinity) {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const postsInSession = await Post.find({
       author: req.user.id,
       postType,
       createdAt: { $gte: since },
-    });
-    if (existing) {
-      const nextAllowed = new Date(existing.createdAt).getTime() + 24 * 60 * 60 * 1000;
-      return res.status(429).json({
-        message: `You can only post one ${postType} per 24 hours.`,
-        nextAllowedAt: nextAllowed,
-      });
-    }
-  }
-
-  if (postType === 'CODE') {
-    const codePosts = await Post.find({
-      author: req.user.id,
-      postType: 'CODE',
-      createdAt: { $gte: since },
     }).sort({ createdAt: 1 });
 
-    if (codePosts.length >= 3) {
-      const nextAllowed = new Date(codePosts[0].createdAt).getTime() + 24 * 60 * 60 * 1000;
+    if (postsInSession.length >= limit) {
+      const nextAllowed = new Date(postsInSession[0].createdAt).getTime() + 24 * 60 * 60 * 1000;
       return res.status(429).json({
-        message: 'You can only post 3 code snippets per 24 hours.',
+        message: `You can only post ${limit} ${postType.toLowerCase()}s per 24 hours with your current plan.`,
         nextAllowedAt: nextAllowed,
       });
     }
@@ -182,7 +178,7 @@ router.post('/', authMiddleware, async (req, res) => {
     });
 
     await post.save();
-    await post.populate('author', 'user_id email avatarColor');
+    await post.populate('author', 'user_id email avatarColor bio profileImage membershipLevel');
 
     res.status(201).json(post);
   } catch (err) {
@@ -328,7 +324,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
     post.isEdited = true; // Optional: track if edited
     await post.save();
-    await post.populate('author', 'user_id email avatarColor');
+    await post.populate('author', 'user_id email avatarColor bio profileImage membershipLevel');
 
     res.json(post);
   } catch (err) {

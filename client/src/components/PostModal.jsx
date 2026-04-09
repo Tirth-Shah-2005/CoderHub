@@ -125,7 +125,7 @@ export default function PostModal({ onPostCreated, onClose }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <h3>💻 New Code Post</h3>
             <span className="usage-indicator">
-              {usage.limit - usage.count} / {usage.limit} remaining today
+              {usage.limit === -1 ? 'Unlimited' : `${usage.limit - usage.count} / ${usage.limit} remaining today`}
             </span>
           </div>
           <button className="modal-close" onClick={onClose}>✕</button>
@@ -136,7 +136,7 @@ export default function PostModal({ onPostCreated, onClose }) {
             <span className="rate-limit-icon">⏳</span>
             <div>
               <div className="rate-limit-title">Daily limit reached</div>
-              <div className="rate-limit-sub">You've posted 3 snippets today. Next allowed in <strong>{countdown}</strong></div>
+              <div className="rate-limit-sub">You've posted {usage.count} snippets today. Next allowed in <strong>{countdown}</strong></div>
             </div>
           </div>
         )}

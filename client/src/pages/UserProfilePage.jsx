@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import PostCard from '../components/PostCard'
 import SuggestionRow from '../components/SuggestionRow'
 import api from '../api/axios'
+import Avatar from '../components/Avatar'
 
 export default function UserProfilePage() {
   const { userId } = useParams()
@@ -99,18 +100,7 @@ export default function UserProfilePage() {
       </button>
 
       <div className="profile-header">
-        <div
-          className="profile-avatar"
-          style={{
-            background: profile?.profileImage ? 'transparent' : (profile?.avatarColor || 'linear-gradient(135deg, #58a6ff, #bc8cff)'),
-            overflow: 'hidden',
-          }}
-        >
-          {profile?.profileImage
-            ? <img src={profile.profileImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-            : profile?.user_id?.[0]?.toUpperCase()
-          }
-        </div>
+        <Avatar user={profile} size={72} />
 
         <div className="profile-info">
           {profile?.name && <h1 className="profile-display-name">{profile.name}</h1>}

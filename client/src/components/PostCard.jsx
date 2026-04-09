@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { useTheme } from '../context/ThemeContext'
 import EditPostModal from './EditPostModal'
 import SavePostModal from './SavePostModal'
+import Avatar from './Avatar'
 
 const LANG_CLASS_MAP = {
   JavaScript: 'js', TypeScript: 'ts', Python: 'python', Java: 'java',
@@ -46,6 +47,8 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
   const [showComments, setShowComments] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSaveModal, setShowSaveModal] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [submittingComment, setSubmittingComment] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -86,23 +89,15 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
     }
   }
 
-  const handleDelete = async (e) => {
-    // Prevent event bubbling if the card is inside a clickable container
-    if (e) {
-      e.stopPropagation()
-      e.preventDefault()
-    }
-    
-    if (!window.confirm('Are you sure you want to permanently delete this post?')) return
-    
+  const handleDelete = async () => {
+    setDeleting(true)
     try {
-      console.log('Attempting to delete post:', post._id)
-      const res = await api.delete(`/posts/${post._id}`)
-      console.log('Delete successful:', res.data)
+      await api.delete(`/posts/${post._id}`)
       onDelete && onDelete(post._id)
     } catch (err) {
-      console.error('Delete error details:', err.response?.data || err.message)
-      alert('Could not delete post: ' + (err.response?.data?.message || err.message))
+      console.error('Delete error:', err.response?.data || err.message)
+      setConfirmDelete(false)
+      setDeleting(false)
     }
   }
 
@@ -136,18 +131,7 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
     <div className={`post-card post-type-${postType.toLowerCase()}`}>
       <div className="post-header">
         <div className="post-author">
-          <div
-            className="post-avatar"
-            style={{
-              background: post.author?.profileImage ? 'transparent' : (post.author?.avatarColor || 'linear-gradient(135deg, #58a6ff, #bc8cff)'),
-              overflow: 'hidden',
-            }}
-          >
-            {post.author?.profileImage
-              ? <img src={post.author.profileImage} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-              : post.author?.user_id?.[0]?.toUpperCase() || '?'
-            }
-          </div>
+          <Avatar user={post.author} size={38} />
           <div>
             <div className="post-user-id">
               @{post.author?.user_id || 'unknown'}
@@ -206,6 +190,15 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
               language={PRISM_LANG_MAP[post.language] || 'javascript'}
               useInlineStyles={false}
               PreTag="div"
+              customStyle={{
+                background: 'transparent',
+                color: '#e6edf3',
+                margin: 0,
+                padding: 0,
+              }}
+              codeTagProps={{
+                style: { color: '#e6edf3' }
+              }}
             >
               {post.code}
             </SyntaxHighlighter>
@@ -238,13 +231,32 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
         </button>
 
         {isAuthor && (
-          <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
-            <button className="btn-action edit" onClick={() => setShowEditModal(true)} title="Edit post">
-              ✏️
-            </button>
-            <button className="btn-delete" onClick={handleDelete} title="Delete post">
-              🗑️
-            </button>
+          <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', alignItems: 'center' }}>
+            {confirmDelete ? (
+              <>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Delete?</span>
+                <button
+                  className="btn-delete"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{ background: '#f85149', color: '#fff', opacity: deleting ? 0.6 : 1 }}
+                >
+                  {deleting ? '...' : '✓'}
+                </button>
+                <button
+                  className="btn-action"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                >
+                  ✕
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn-action edit" onClick={() => setShowEditModal(true)} title="Edit post">✏️</button>
+                <button className="btn-delete" onClick={() => setConfirmDelete(true)} title="Delete post">🗑️</button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -252,9 +264,7 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
       {showComments && (
         <div className="comments-section">
           <div className="comment-input-row">
-            <div className="comment-avatar">
-              {user?.user_id?.[0]?.toUpperCase()}
-            </div>
+            <Avatar user={user} size={32} />
             <input
               className="comment-input"
               type="text"
@@ -276,9 +286,7 @@ export default function PostCard({ post: initialPost, onUpdate: onParentUpdate, 
             <div className="comments-list">
               {comments.map((comment, i) => (
                 <div className="comment-item" key={comment._id || i}>
-                  <div className="comment-avatar">
-                    {comment.user_id?.[0]?.toUpperCase() || '?'}
-                  </div>
+                  <Avatar user={{ user_id: comment.user_id, membershipLevel: comment.membershipLevel }} size={28} />
                   <div className="comment-body">
                     <div className="comment-user">@{comment.user_id}</div>
                     <div className="comment-text">{comment.text}</div>

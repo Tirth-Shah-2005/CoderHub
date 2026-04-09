@@ -83,7 +83,7 @@ export default function AuthPage() {
             className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
             onClick={() => switchMode('login')}
           >
-            Sign In
+            Log In
           </button>
           <button
             className={`auth-tab ${mode === 'signup' ? 'active' : ''}`}
@@ -96,6 +96,16 @@ export default function AuthPage() {
         {error && (
           <div className="error-msg">
             <span>⚠</span> {error}
+          </div>
+        )}
+
+        {mode === 'signup' && (
+          <div className="auth-warning-banner">
+            <div className="auth-warning-icon">⚠️</div>
+            <div className="auth-warning-body">
+              <strong>Temporary Activation Notice</strong>
+              <p>This website will only stay live until <strong>1st May</strong> and will then be deactivated. Create an account at your own risk. Some features (e.g. membership purchase, support center) may be unavailable.</p>
+            </div>
           </div>
         )}
 
@@ -150,7 +160,7 @@ export default function AuthPage() {
             {loading
               ? '⏳ Please wait...'
               : mode === 'login'
-              ? '🚀 Sign In'
+              ? '🚀 Log In'
               : '🎉 Create My Account'}
           </button>
         </form>
@@ -174,7 +184,7 @@ export default function AuthPage() {
               padding: 0,
             }}
           >
-            {mode === 'login' ? 'Sign up' : 'Sign in'}
+            {mode === 'login' ? 'Sign up' : 'Log in'}
           </button>
         </p>
       </div>
