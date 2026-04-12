@@ -104,7 +104,7 @@ export default function AuthPage() {
             <div className="auth-warning-icon">⚠️</div>
             <div className="auth-warning-body">
               <strong>Temporary Activation Notice</strong>
-              <p>This website will only stay live until <strong>1st May</strong> and will then be deactivated. Create an account at your own risk. Some features (e.g. membership purchase, support center) may be unavailable.</p>
+              <p>This website will only stay live until <strong>13th May 2026</strong> and will then be deactivated. Create an account at your own risk. Some features (e.g. membership purchase, support center) may be unavailable.</p>
             </div>
           </div>
         )}
@@ -160,8 +160,8 @@ export default function AuthPage() {
             {loading
               ? '⏳ Please wait...'
               : mode === 'login'
-              ? '🚀 Log In'
-              : '🎉 Create My Account'}
+                ? '🚀 Log In'
+                : '🎉 Create My Account'}
           </button>
         </form>
 
